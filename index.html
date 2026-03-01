@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>家庭记账</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Supabase JS（请按需要替换为官方 CDN 地址或本地构建） -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- 登录页面 -->
+    <section id="page-login" class="page page-active">
+      <header class="page-header">
+        <h1 class="app-title">家庭记账</h1>
+        <p class="app-subtitle">请先登录</p>
+      </header>
+      <main class="page-main">
+        <form id="login-form" class="form">
+          <label class="form-field">
+            <span class="form-label">用户名</span>
+            <input id="login-username" type="text" autocomplete="username" required />
+          </label>
+          <label class="form-field">
+            <span class="form-label">密码</span>
+            <input id="login-password" type="password" autocomplete="current-password" required />
+          </label>
+          <button type="submit" class="btn btn-primary btn-block">登录</button>
+          <p id="login-error" class="form-error" aria-live="polite"></p>
+        </form>
+      </main>
+    </section>
+
+    <!-- 首页 -->
+    <section id="page-home" class="page">
+      <header class="page-header">
+        <div>
+          <h1 class="app-title">家庭记账首页</h1>
+          <p id="home-username" class="app-subtitle"></p>
+        </div>
+        <button id="btn-logout" class="btn btn-text">退出</button>
+      </header>
+      <main class="page-main">
+        <div class="grid-menu">
+          <button class="btn btn-menu" data-target="page-income">记收入</button>
+          <button class="btn btn-menu" data-target="page-expense">记支出</button>
+          <button class="btn btn-menu btn-disabled" disabled>今年情况（暂不开发）</button>
+          <button class="btn btn-menu btn-disabled" disabled>历年汇总（暂不开发）</button>
+          <button class="btn btn-menu" data-target="page-users">用户管理</button>
+          <button class="btn btn-menu" data-target="page-accounts">财帐管理</button>
+          <button class="btn btn-menu" data-target="page-details">明细管理</button>
+        </div>
+      </main>
+    </section>
+
+    <!-- 记收入 -->
+    <section id="page-income" class="page">
+      <header class="page-header">
+        <h1 class="app-title">记收入</h1>
+      </header>
+      <main class="page-main">
+        <div class="toolbar">
+          <button id="income-submit" class="btn btn-primary">记账成功</button>
+          <button id="income-reset" class="btn btn-secondary">清零</button>
+          <button class="btn btn-text" data-back-home>返回</button>
+        </div>
+        <form id="income-form" class="form">
+          <label class="form-field">
+            <span class="form-label">记账人</span>
+            <input id="income-user" type="text" readonly />
+          </label>
+          <label class="form-field">
+            <span class="form-label">记录时间</span>
+            <input id="income-datetime" type="datetime-local" required />
+          </label>
+          <label class="form-field">
+            <span class="form-label">收入类型 I</span>
+            <select id="income-type-1" required>
+              <option value="">请选择</option>
+              <option value="工资">工资</option>
+              <option value="其他收入">其他收入</option>
+            </select>
+          </label>
+          <label class="form-field">
+            <span class="form-label">收入类型 II</span>
+            <select id="income-type-2" required>
+              <option value="">请选择</option>
+            </select>
+          </label>
+          <label class="form-field">
+            <span class="form-label">实际到手</span>
+            <input id="income-net" type="number" step="0.01" min="0" required />
+          </label>
+          <label class="form-field">
+            <span class="form-label">税前</span>
+            <input id="income-gross" type="number" step="0.01" min="0" />
+          </label>
+          <label class="form-field">
+            <span class="form-label">税额</span>
+            <input id="income-tax" type="number" step="0.01" min="0" />
+          </label>
+          <label class="form-field">
+            <span class="form-label">备注</span>
+            <textarea id="income-note" rows="2" placeholder="当类型为“其他工资”或“其他收入”时必填"></textarea>
+          </label>
+
+          <div class="form-field">
+            <div class="form-label-row">
+              <span class="form-label">计入财帐</span>
+              <button id="income-accounts-add" type="button" class="btn btn-ghost-small">+ 添加财帐</button>
+            </div>
+            <div id="income-accounts-list" class="accounts-list"></div>
+            <p class="form-help">计入财帐金额之和与实际到手金额差异不可大于 3.0</p>
+          </div>
+          <p id="income-error" class="form-error" aria-live="polite"></p>
+        </form>
+      </main>
+    </section>
+
+    <!-- 记支出 -->
+    <section id="page-expense" class="page">
+      <header class="page-header">
+        <h1 class="app-title">记支出</h1>
+      </header>
+      <main class="page-main">
+        <div class="toolbar">
+          <button id="expense-submit" class="btn btn-primary">记账成功</button>
+          <button id="expense-reset" class="btn btn-secondary">清零</button>
+          <button class="btn btn-text" data-back-home>返回</button>
+        </div>
+        <form id="expense-form" class="form">
+          <label class="form-field">
+            <span class="form-label">记账人</span>
+            <input id="expense-user" type="text" readonly />
+          </label>
+          <label class="form-field">
+            <span class="form-label">记录时间</span>
+            <input id="expense-datetime" type="datetime-local" required />
+          </label>
+          <label class="form-field">
+            <span class="form-label">支出类型 I</span>
+            <select id="expense-type-1" required>
+              <option value="">请选择</option>
+              <option value="年度预算">年度预算</option>
+              <option value="其他支出">其他支出</option>
+            </select>
+          </label>
+          <label class="form-field">
+            <span class="form-label">支出备注</span>
+            <textarea id="expense-note" rows="2" required></textarea>
+          </label>
+          <label class="form-field">
+            <span class="form-label">支出金额</span>
+            <input id="expense-amount" type="number" step="0.01" min="0" required />
+          </label>
+
+          <div class="form-field">
+            <div class="form-label-row">
+              <span class="form-label">支出财帐</span>
+              <button id="expense-accounts-add" type="button" class="btn btn-ghost-small">+ 添加财帐</button>
+            </div>
+            <div id="expense-accounts-list" class="accounts-list"></div>
+          </div>
+          <p id="expense-error" class="form-error" aria-live="polite"></p>
+        </form>
+      </main>
+    </section>
+
+    <!-- 明细管理 -->
+    <section id="page-details" class="page">
+      <header class="page-header">
+        <h1 class="app-title">明细管理</h1>
+      </header>
+      <main class="page-main">
+        <div class="toolbar">
+          <button id="details-save" class="btn btn-primary">保存</button>
+          <button id="details-reset" class="btn btn-secondary">清除</button>
+          <button class="btn btn-text" data-back-home>返回</button>
+          <button id="details-income" class="btn btn-ghost">收入明细</button>
+          <button id="details-expense" class="btn btn-ghost">支出明细</button>
+        </div>
+        <p id="details-tip" class="form-help">为防止表格项目冲突，请先选择“收入明细”或“支出明细”。</p>
+        <div class="table-wrapper">
+          <table id="details-table" class="table">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </main>
+    </section>
+
+    <!-- 财帐管理 -->
+    <section id="page-accounts" class="page">
+      <header class="page-header">
+        <h1 class="app-title">财帐管理</h1>
+      </header>
+      <main class="page-main">
+        <div class="toolbar">
+          <button id="accounts-save" class="btn btn-primary">保存</button>
+          <button id="accounts-reset" class="btn btn-secondary">清除</button>
+          <button class="btn btn-text" data-back-home>返回</button>
+          <button id="accounts-add" class="btn btn-ghost">新增财帐</button>
+        </div>
+        <p class="form-help"><strong>说明：</strong>财帐ID具有唯一性，财帐名称的修改只是修改名称，会导致其余位置对应名称变更。</p>
+        <div class="table-wrapper">
+          <table id="accounts-table" class="table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>财帐ID</th>
+                <th>财帐名称</th>
+                <th>财帐用途</th>
+                <th>银行卡</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p id="accounts-error" class="form-error" aria-live="polite"></p>
+      </main>
+    </section>
+
+    <!-- 用户管理 -->
+    <section id="page-users" class="page">
+      <header class="page-header">
+        <h1 class="app-title">用户管理</h1>
+      </header>
+      <main class="page-main">
+        <div class="toolbar">
+          <button id="users-save" class="btn btn-primary">保存</button>
+          <button id="users-reset" class="btn btn-secondary">清除</button>
+          <button class="btn btn-text" data-back-home>返回</button>
+          <button id="users-add" class="btn btn-ghost">新增用户</button>
+        </div>
+        <div class="table-wrapper">
+          <table id="users-table" class="table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>用户ID</th>
+                <th>用户名</th>
+                <th>密码</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p id="users-error" class="form-error" aria-live="polite"></p>
+      </main>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
